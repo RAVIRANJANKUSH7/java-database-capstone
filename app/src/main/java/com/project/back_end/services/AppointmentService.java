@@ -2,9 +2,12 @@ package com.project.back_end.services;
 
 import com.project.back_end.models.Appointment;
 import com.project.back_end.repositories.AppointmentRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,27 +26,35 @@ public class AppointmentService {
                         new RuntimeException("Appointment not found with id: " + id));
     }
 
-    public List<Appointment> getAppointmentsByPatient(Long patientId) {
-        return appointmentRepository.findByPatientId(patientId);
-    }
-
-    public List<Appointment> getAppointmentsByDoctor(Long doctorId) {
-        return appointmentRepository.findByDoctorId(doctorId);
-    }
-
+    // Book a new appointment
     public Appointment bookAppointment(Appointment appointment) {
         return appointmentRepository.save(appointment);
     }
 
-    public Appointment updateAppointment(Long id, Appointment appointment) {
+    // Get appointments for a doctor on a specific date
+    public List<Appointment> getAppointmentsByDoctorAndDate(
+            Long doctorId, LocalDate date) {
+
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+
+        return appointmentRepository
+                .findByDoctor_IdAndAppointmentTimeBetween(
+                        doctorId,
+                        startOfDay,
+                        endOfDay
+                );
+    }
+
+    public Appointment updateAppointment(
+            Long id, Appointment appointment) {
+
         Appointment existingAppointment = getAppointmentById(id);
 
-        existingAppointment.setDoctorId(appointment.getDoctorId());
-        existingAppointment.setPatientId(appointment.getPatientId());
-        existingAppointment.setAppointmentDate(appointment.getAppointmentDate());
-        existingAppointment.setAppointmentTime(appointment.getAppointmentTime());
-        existingAppointment.setStatus(appointment.getStatus());
-        existingAppointment.setReason(appointment.getReason());
+        existingAppointment.setDoctor(appointment.getDoctor());
+        existingAppointment.setPatient(appointment.getPatient());
+        existingAppointment.setAppointmentTime(
+                appointment.getAppointmentTime());
 
         return appointmentRepository.save(existingAppointment);
     }
